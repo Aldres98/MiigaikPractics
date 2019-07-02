@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>XYZ + Leaflet-Realtime</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin="" />
+
+    <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js" integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg==" crossorigin=""></script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <script src="dist/leaflet-heat.js"></script>
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-realtime/2.1.1/leaflet-realtime.min.js"></script>
+    <script src="http://js.api.here.com/v3/3.0/mapsjs-core.js" type="text/javascript" charset="utf-8"></script>
+    <script src="http://js.api.here.com/v3/3.0/mapsjs-service.js" type="text/javascript" charset="utf-8"></script>
+    <script src="http://js.api.here.com/v3/3.0/mapsjs-data.js" type="text/javascript" charset="utf-8"></script>
+    <script type="text/javascript" src="https://js.api.here.com/v3/3.0/mapsjs-core.js"></script>
+    <script type="text/javascript" src="https://js.api.here.com/v3/3.0/mapsjs-service.js"></script>
+    <script type="text/javascript" src="https://js.api.here.com/v3/3.0/mapsjs-ui.js"></script>
+    <script type="text/javascript" src="https://js.api.here.com/v3/3.0/mapsjs-mapevents.js"></script>
+    <script type="text/javascript" src="https://js.api.here.com/v3/3.0/mapsjs-data.js"></script>
+
+    <style type="text/css">
+        html,
+        body,
+        #map {
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+        }
+        
+        #map {
+            position: relative;
+        }
+        
+        .info-container {
+            position: absolute;
+            z-index: 999;
+            width: 300px;
+            height: 400px;
+            margin-top: 1%;
+            margin-left: 1%;
+            border-radius: 12px;
+            background: white;
+            top: 0;
+            left: 0%;
+            /* this line of code will sort things out for you :) */
+        }
+        
+        .project-title {
+            text-align: center;
+        }
+        
+        .project-description-text {
+            text-align: left;
+            font-size: 16px;
+            padding-left: 10px;
+        }
+        
+        .additional-info-button {
+            background-color: #0393ff;
+            top: 460px;
+            color: white;
+            height: 30px;
+            text-align: center;
+            font-size: 18px;
+            width: 300px
+        }
+        
+        #layer-switcher_wrap {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background-color: #fff;
+            width: 250px;
+            border-radius: 3px;
+            z-index: 999;
+        }
+        
+        .control {
+            display: block;
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 5px;
+            padding-top: 3px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- <div id="input-box" style="margin-top: 10px;">
+        <input type="checkbox" id="residential">Residential</input>
+        <input type="checkbox" id="non_residential">Non-residential</input>
+        <input type="checkbox" id="hostel">Hostel</input>
+        <button onclick="drawLines()">Hostel</button>
+    </div> -->
+
+    <div id="map" style="margin-top: 20px;">
+        <div class="info-container">
+            <h1 class="project-title">Hostel Hit Map</h1>
+            <p class="project-description-text">информационно-рекомендательный сервис в сфере гостиничного бизнеса.
+            </p>
+            <h4 class="project-description-text">Данный сервис содержит в себе:
+                                    </h4>
+            <ul style="padding-left: 30px; padding-right: 15px;">
+                <li style="font-size:16px;">Интерактивную карту для определения территорий, где возможно размещение хостелов в соответствии с законодательными нормами.
+                </li>
+                <li style="font-size:16px;">
+                    Справку об общих требованиях к хостелам.
+                </li>
+            </ul>
+            <a target="_blank" href="https://docs.google.com/document/d/1CHMYh0tyMksA02lDnMLGQM1zeCC_4jZs-7mT1RT0f98/edit?usp=sharing"><div class="additional-info-button" onclick="">Общие требования к хостелам</div></a>
+
+        </div>
+
+        <div id="layer-switcher_wrap" style:="padding-right:10px;">
+            <div class="control-group">
+                
+                <label class="control control-checkbox"> Жилые помещения
+                        <span style="    margin-right: 5px;background-color: #5296dd; width: 14px; height: 14px; display: inline-block;     float: left;"></span>                          
+                        <input id="residential" type="checkbox" checked="true">
+
+                    <div class="control_indicator"></div>
+                </label>
+                <label class="control control-checkbox"> Нежилые помещения
+                        <span style="    margin-right: 5px;background-color: #52d556; width: 14px; height: 14px; display: inline-block;    float: left;"></span>  
+                        <input id="non_residential" type="checkbox" checked="true">
+                    <div class="control_indicator"></div>
+                </label>
+                <label class="control control-checkbox"> Хостелы
+                        <span style="    margin-right: 5px;background-color: #ff0000; width: 14px; height: 14px; display: inline-block; border-radius: 50%;    float: left;"></span>  
+                    <input id="hostel" type="checkbox">
+                    <div class="control_indicator"></div>
+                </label>
+                <label class="control control-checkbox"> Недвижимость в аренду
+                        <span style="    margin-right: 5px;background-color: #00e100; width: 14px; height: 14px; display: inline-block; border-radius: 50%;    float: left;"></span>  
+                        <input id="cian" type="checkbox">
+                        <div class="control_indicator"></div>
+                    </label>
+    
+                <label class="control control-checkbox"> Метро в пяти минутах ходьбы
+                        <input id="metro" type="checkbox" onclick="drawLines()">
+                        <div class="control_indicator"></div>
+                    </label>
+            </div>
+        </div>
+    </div>
+
+    <img src="logo_pur.png" id="logo" style="position: absolute;
+    right: 0px;
+    width: 80px;
+    height: 80px;
+    bottom: 0px;
+    z-index: 999;
+    ">
+
+
+    <script type="text/javascript">
+        $("#residential").click(function() {
+            if (this.checked) {
+                map.addLayer(residential_layer)
+            } else {
+                map.removeLayer(residential_layer);
+            };
+        });
+
+        $("#non_residential").click(function() {
+            if (this.checked) {
+                map.addLayer(non_residential_layer)
+            } else {
+                map.removeLayer(non_residential_layer);
+            };
+        });
+
+        $("#hostel").click(function() {
+            if (this.checked) {
+                map.addLayer(hostel_layer)
+            } else {
+                map.removeLayer(hostel_layer);
+            };
+        });
+
+        $("#cian").click(function() {
+            if (this.checked) {
+                map.addLayer(cian_layer)
+            } else {
+                map.removeLayer(cian_layer);
+            };
+        });
+        $("#metro").click(function() {
+            if (this.checked) {
+                map.addLayer(drawnItems)
+            } else {
+                map.removeLayer(drawnItems);
+            };
+        });
+
+        var metro = [{
+            "Longitude": 37.864052,
+            "Latitude": 55.745113
+        }, {
+            "Longitude": 37.814587,
+            "Latitude": 55.752237
+        }, {
+            "Longitude": 37.78422,
+            "Latitude": 55.75098
+        }, {
+            "Longitude": 37.751703,
+            "Latitude": 55.75809
+        }, {
+            "Longitude": 37.717444,
+            "Latitude": 55.751933
+        }, {
+            "Longitude": 37.680726,
+            "Latitude": 55.747115
+        }, {
+            "Longitude": 37.65604,
+            "Latitude": 55.740746
+        }, {
+            "Longitude": 37.626142,
+            "Latitude": 55.741125
+        }, {
+            "Longitude": 37.5395,
+            "Latitude": 55.7491
+        }, {
+            "Longitude": 37.514401,
+            "Latitude": 55.736478
+        }, {
+            "Longitude": 37.476728,
+            "Latitude": 55.854152
+        }, {
+            "Longitude": 37.487515,
+            "Latitude": 55.838978
+        }, {
+            "Longitude": 37.497791,
+            "Latitude": 55.818923
+        }, {
+            "Longitude": 37.515245,
+            "Latitude": 55.805564
+        }, {
+            "Longitude": 37.530477,
+            "Latitude": 55.800441
+        }, {
+            "Longitude": 37.558212,
+            "Latitude": 55.789704
+        }, {
+            "Longitude": 37.582107,
+            "Latitude": 55.777439
+        }, {
+            "Longitude": 37.596192,
+            "Latitude": 55.769808
+        }, {
+            "Longitude": 37.603918,
+            "Latitude": 55.765343
+        }, {
+            "Longitude": 37.61768,
+            "Latitude": 55.758808
+        }, {
+            "Longitude": 37.62928,
+            "Latitude": 55.742391
+        }, {
+            "Longitude": 37.638693,
+            "Latitude": 55.729741
+        }, {
+            "Longitude": 37.657008,
+            "Latitude": 55.706634
+        }, {
+            "Longitude": 37.664167,
+            "Latitude": 55.695
+        }, {
+            "Longitude": 37.663719,
+            "Latitude": 55.677423
+        }, {
+            "Longitude": 37.649683,
+            "Latitude": 55.655745
+        }, {
+            "Longitude": 37.656218,
+            "Latitude": 55.636107
+        }, {
+            "Longitude": 37.669612,
+            "Latitude": 55.620982
+        }, {
+            "Longitude": 37.695214,
+            "Latitude": 55.61269
+        }, {
+            "Longitude": 37.717111,
+            "Latitude": 55.610131
+        }, {
+            "Longitude": 37.742697,
+            "Latitude": 55.614075
+        }, {
+            "Longitude": 37.765678,
+            "Latitude": 55.63349
+        }, {
+            "Longitude": 37.661562,
+            "Latitude": 55.888103
+        }, {
+            "Longitude": 37.664341,
+            "Latitude": 55.870641
+        }, {
+            "Longitude": 37.653379,
+            "Latitude": 55.855558
+        }, {
+            "Longitude": 37.637811,
+            "Latitude": 55.844597
+        }, {
+            "Longitude": 37.640751,
+            "Latitude": 55.819626
+        }, {
+            "Longitude": 37.638699,
+            "Latitude": 55.807794
+        }, {
+            "Longitude": 37.636114,
+            "Latitude": 55.792494
+        }, {
+            "Longitude": 37.633199,
+            "Latitude": 55.781827
+        }, {
+            "Longitude": 37.63285,
+            "Latitude": 55.772315
+        }, {
+            "Longitude": 37.636732,
+            "Latitude": 55.765371
+        }, {
+            "Longitude": 37.631326,
+            "Latitude": 55.756498
+        }, {
+            "Longitude": 37.625624,
+            "Latitude": 55.74073
+        }, {
+            "Longitude": 37.612851,
+            "Latitude": 55.731232
+        }, {
+            "Longitude": 37.607892,
+            "Latitude": 55.718828
+        }, {
+            "Longitude": 37.58499,
+            "Latitude": 55.70678
+        }, {
+            "Longitude": 37.5723,
+            "Latitude": 55.687147
+        }, {
+            "Longitude": 37.562595,
+            "Latitude": 55.677671
+        }, {
+            "Longitude": 37.554493,
+            "Latitude": 55.670077
+        }, {
+            "Longitude": 37.540075,
+            "Latitude": 55.656682
+        }, {
+            "Longitude": 37.526115,
+            "Latitude": 55.642357
+        }, {
+            "Longitude": 37.519156,
+            "Latitude": 55.631857
+        }, {
+            "Longitude": 37.505912,
+            "Latitude": 55.61873
+        }, {
+            "Longitude": 37.5334,
+            "Latitude": 55.606182
+        }, {
+            "Longitude": 37.553017,
+            "Latitude": 55.601947
+        }, {
+            "Longitude": 37.732227,
+            "Latitude": 55.814916
+        }, {
+            "Longitude": 37.744863,
+            "Latitude": 55.802787
+        }, {
+            "Longitude": 37.713582,
+            "Latitude": 55.796322
+        }, {
+            "Longitude": 37.679895,
+            "Latitude": 55.789282
+        }, {
+            "Longitude": 37.666097,
+            "Latitude": 55.780014
+        }, {
+            "Longitude": 37.654565,
+            "Latitude": 55.774072
+        }, {
+            "Longitude": 37.6478,
+            "Latitude": 55.768307
+        }, {
+            "Longitude": 37.638293,
+            "Latitude": 55.76499
+        }, {
+            "Longitude": 37.625336,
+            "Latitude": 55.759889
+        }, {
+            "Longitude": 37.615078,
+            "Latitude": 55.757228
+        }, {
+            "Longitude": 37.610388,
+            "Latitude": 55.752123
+        }, {
+            "Longitude": 37.604217,
+            "Latitude": 55.745297
+        }, {
+            "Longitude": 37.595027,
+            "Latitude": 55.736163
+        }, {
+            "Longitude": 37.58022,
+            "Latitude": 55.727462
+        }, {
+            "Longitude": 37.562041,
+            "Latitude": 55.722388
+        }, {
+            "Longitude": 37.557293,
+            "Latitude": 55.709169
+        }, {
+            "Longitude": 37.534511,
+            "Latitude": 55.69329
+        }, {
+            "Longitude": 37.504584,
+            "Latitude": 55.676549
+        }, {
+            "Longitude": 37.482852,
+            "Latitude": 55.663146
+        }, {
+            "Longitude": 37.4725,
+            "Latitude": 55.6459
+        }, {
+            "Longitude": 37.4419,
+            "Latitude": 55.633
+        }, {
+            "Longitude": 37.424,
+            "Latitude": 55.6227
+        }, {
+            "Longitude": 37.798261,
+            "Latitude": 55.809962
+        }, {
+            "Longitude": 37.799364,
+            "Latitude": 55.794376
+        }, {
+            "Longitude": 37.779896,
+            "Latitude": 55.787713
+        }, {
+            "Longitude": 37.74882,
+            "Latitude": 55.788401
+        }, {
+            "Longitude": 37.719289,
+            "Latitude": 55.783096
+        }, {
+            "Longitude": 37.7053,
+            "Latitude": 55.782057
+        }, {
+            "Longitude": 37.67904,
+            "Latitude": 55.772405
+        }, {
+            "Longitude": 37.62236,
+            "Latitude": 55.756741
+        }, {
+            "Longitude": 37.659039,
+            "Latitude": 55.758564
+        }, {
+            "Longitude": 37.60349,
+            "Latitude": 55.752312
+        }, {
+            "Longitude": 37.583802,
+            "Latitude": 55.747713
+        }, {
+            "Longitude": 37.564132,
+            "Latitude": 55.743117
+        }, {
+            "Longitude": 37.516865,
+            "Latitude": 55.735679
+        }, {
+            "Longitude": 37.470973,
+            "Latitude": 55.729542
+        }, {
+            "Longitude": 37.445123,
+            "Latitude": 55.730634
+        }, {
+            "Longitude": 37.415627,
+            "Latitude": 55.741375
+        }, {
+            "Longitude": 37.408139,
+            "Latitude": 55.756842
+        }, {
+            "Longitude": 37.402405,
+            "Latitude": 55.803831
+        }, {
+            "Longitude": 37.385214,
+            "Latitude": 55.823342
+        }, {
+            "Longitude": 37.382453,
+            "Latitude": 55.835154
+        }, {
+            "Longitude": 37.36122,
+            "Latitude": 55.846098
+        }, {
+            "Longitude": 37.353108,
+            "Latitude": 55.853634
+        }]
+
+        // Map settings manager
+        let M = {
+            'AppId': '63vR5UbOum9b6qxMqHQw',
+            'AppCode': 'bx_Fo6ynpxHtnkl6MND3sg',
+            'Lat': 55.751,
+            'Lng': 37.620,
+            'Zoom': 12,
+            'TileLayerUrl': {}
+        }
+
+
+        // Base Map
+        M.TileLayerUrl = (style) => `https://2.base.maps.api.here.com/maptile/2.1/maptile/newest/${style}/{z}/{x}/{y}/512/png8?app_id=${M.AppId}&app_code=${M.AppCode}&ppi=320&lg=rus`
+
+        const map = L.map('map').setView([M.Lat, M.Lng], M.Zoom)
+
+        L.tileLayer(M.TileLayerUrl('reduced.night')).addTo(map)
+
+        // Url for downloading data
+        var layerGroup = new L.LayerGroup();
+        var residential_layer = null;
+        var non_residential_layer = null;
+        var hostel_layer = null;
+        var cian_layer = null;
+        var isolines_layer = null;
+
+        var hostels = null;
+
+        let hostel_data = 'https://xyz.api.here.com/hub/spaces/ZWmTn3nx/iterate?access_token=AMX7qta6BPSfWHKlBE9xjgQ'
+        // let activities_data = 'https://xyz.api.here.com/hub/spaces/gQGk3IIt/iterate?access_token=AMX7qta6BPSfWHKlBE9xjgQ'
+        let non_res_data = 'https://xyz.api.here.com/hub/spaces/mqX04smj/iterate?access_token=AMX7qta6BPSfWHKlBE9xjgQ'
+        let res_data = 'https://xyz.api.here.com/hub/spaces/Zvw30ufR/iterate?access_token=AMX7qta6BPSfWHKlBE9xjgQ'
+        let cian_data = 'https://xyz.api.here.com/hub/spaces/UADFR0gg/iterate?access_token=AMX7qta6BPSfWHKlBE9xjgQ'
+        let isolineUrl = `https://isoline.route.api.here.com/routing/7.2/calculateisoline.json?app_id=${M.AppId}&app_code=${M.AppCode}&jsonattributes=41&mode=fastest;pedestrian&quality=1&range=300&rangetype=time&start=geo!stopOver!55.745113,37.864052`
+        // let temp_data = `https://xyz.api.here.com/hub/spaces/Z7mAttea/iterate?access_token=AHqbaONckj9dcX3hMf5JsXU`
+        // let realTimeLayer = `https://xyz.api.here.com/hub/spaces/LnfOpVI5/iterate?access_token=AfL648ZDVfGrDXdjz4aNQDs`
+
+        var geojsonMarkerOptions = {
+    radius: 8,
+    fillColor: "#00e100",
+    color: "#000",
+    weight: 1,
+    opacity: 1,
+    fillOpacity: 0.8
+};
+
+// var markers = new L.MarkerClusterGroup();
+
+
+        fetch(hostel_data).then(res => {
+            res.json().then(data => {
+                hostel_layer = L.circleMarker(data, {
+                    style: geojsonMarkerOptions,
+                    onEachFeature: onEachFeature   
+                })
+                hostels = data;
+
+            })
+        })
+
+
+
+        function gatherIsolines(Latitude, Longitude, time) {
+            return `https://isoline.route.api.here.com/routing/7.2/calculateisoline.json?app_id=${M.AppId}&app_code=${M.AppCode}&jsonattributes=41&mode=fastest;pedestrian&quality=1&range=${time}&rangetype=time&start=geo!stopOver!${Latitude},${Longitude}`
+        }
+
+        function onEachFeature(feature, layer) {
+            layer.bindPopup(`<strong> Название: </strong> ${feature.properties.name}<br/>`)
+            layer.on('click', function(e) {
+        
+                // You can make your ajax call declaration here
+                //$.ajax(... 
+                
+            });
+        }
+
+        var non_res_style = {
+            "fillColor": "#52d556",
+            "weight": 1,
+            "color": "#52d556",
+            "opacity": 0.98
+        };
+
+        var res_style = {
+            "fillColor": "#5d94aa",
+            weight: 1,
+            "color": "#5d94aa",
+            "opacity": 0.85
+        };
+
+        fetch(non_res_data).then(res => {
+            res.json().then(data => {
+                non_residential_layer = L.geoJSON(data, {
+                    style: non_res_style,
+                    // onEachFeature: onEachFeature
+
+                }).addTo(map);
+            })
+        })
+
+        fetch(hostel_data).then(res => {
+            res.json().then(data => {
+                hostel_layer = L.geoJSON(data, {
+                    style : function(feature) {
+                    return feature.properties && feature.properties.style;
+                },
+
+                onEachFeature : onEachFeature,
+
+                pointToLayer : function(feature, latlng) {
+                    return L.circleMarker(latlng, {
+                        radius : 5,
+                        fillColor : "#ff0000",
+                        color : "#ff0000",
+                        weight : 1,
+                        opacity : 0.6,
+                        fillOpacity : 0.6
+                    });
+                }
+
+                })
+            })
+        })
+
+        fetch(cian_data).then(res => {
+            res.json().then(data => {
+                cian_layer= L.geoJSON(data, {
+                    style : function(feature) {
+                    return feature.properties && feature.properties.style;
+                },
+
+                onEachFeature : onCianFeature,
+
+                pointToLayer : function(feature, latlng) {
+                    return L.circleMarker(latlng, {
+                        radius : 5,
+                        fillColor : "#00e100",
+                        color : "#00e100",
+                        weight : 1,
+                        opacity : 0.6,
+                        fillOpacity : 0.6
+                    });
+                }
+
+                })
+            })
+            cian_layer.setZIndex(1);
+        })
+
+        function onCianFeature(feature, layer) {
+            layer.bindPopup(`<strong> Плошадь помещения: </strong> ${feature.properties.area} м2<br/>
+            <strong> Цена аренды (руб/мес) : </strong> ${feature.properties.price} <br/>
+            <strong> Станция метро: </strong> ${feature.properties.metro}<br/>
+            <strong> <a href=${feature.properties.link}>Ссылка</a>`
+        )
+            layer.on('click', function(e) {
+        
+                // You can make your ajax call declaration here
+                //$.ajax(... 
+                
+            });
+        }
+
+
+
+        fetch(res_data).then(res => {
+            res.json().then(data => {
+                residential_layer = L.geoJSON(data, {
+                    style: res_style
+                });
+                layerGroup.addLayer(residential_layer);
+                residential_layer.addTo(map);
+            })
+        })
+
+    var drawnItems = new L.FeatureGroup();
+
+    var polyLayers = [];
+
+
+        function drawLines() {
+             for (var i = 0; i < metro.length; i++) {
+                var currentFeature = metro[i];
+
+                var curLong = currentFeature.Longitude;
+                var curLat = currentFeature.Latitude
+                fetch(gatherIsolines(curLat, curLong, 600)).then(res => {
+                    res.json().then(data => {
+                        let splitArray = (array, part) => {
+                            var tmp = []
+                            for (var i = 0; i < array.length; i += part) {
+                                tmp.push(array.slice(i, i + part));
+                            }
+                            return tmp;
+                        }
+                         var polygon = L.polygon(splitArray(data.response.isoline[0].component[0].shape, 2), {
+                            color: '#fff'
+                        })
+                        polyLayers.push(polygon)
+                        polygon = 0;
+                    })
+                    for(layer of polyLayers) {
+                         drawnItems.addLayer(layer); 
+                     }
+                    //  drawnItems.addTo(map);
+
+                })
+            }
+            polyLayers = [];
+            residential_layer.setZIndex(2);
+            non_residential_layer.setZIndex(2);
+            cian_layer.setZIndex(3);
+            hostel_layer.setZIndex(3);
+
+            // isolines_layer.addTo(map);
+
+        }
+        drawLines();
+
+    </script>
+</body>
+
+</html>
